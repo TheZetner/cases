@@ -1,0 +1,126 @@
+---
+title: "Case Report"
+author: "Adrian Zetner"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE, warning=FALSE, comment=FALSE}
+
+library(dplyr)
+library(zoo)
+library(forcats)
+library(ggplot2)
+library(readr)
+library(RColorBrewer)
+library(utilitarian)
+library(lubridate)
+library(knitr)
+
+pr <- c("Canada", "Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon")
+
+f <- function(k) {
+  step <- k
+  function(y) seq((floor(min(y)) %/% step) * step, (ceiling(max(y)) %/% step) * step, by = step)       
+}
+
+caseloadWeeksBack <- function(x, w = 1){
+  x %>% 
+    filter(between(date, as.Date(ymd(Sys.Date()) - weeks(w)), Sys.Date())) %>% # Select period
+    # total caseload for big 4. ie. sum(numtoday) by prov
+    mutate(Tot = sum(numtoday)) %>% # total cases for all 4
+    group_by(geo) %>% 
+    mutate(PctTotal = sum(numtoday)/Tot * 100,
+           Cases = sum(numtoday)) %>% # Percent of cases in that period (sums to 1)
+    slice_head(n = 1) %>% 
+    select(Province = geo, Cases, PctTotal)
+
+}
+
+caseloadAll <- function(x, start = "2020-03-01"){
+  x %>% 
+    filter(between(date, as.Date(start), Sys.Date())) %>% # Select period
+    # total caseload for big 4. ie. sum(numtoday) by prov
+    mutate(Tot = sum(numtoday)) %>% # total cases for all 4
+    group_by(geo) %>% 
+    mutate(PctTotal = sum(numtoday)/Tot * 100,
+           Cases = sum(numtoday)) %>% # Percent of cases in that period (sums to 1)
+    slice_head(n = 1) %>% 
+    select(Province = geo, Cases, PctTotal)
+}
+
+```
+
+
+```{r loaddata, echo=FALSE, message=FALSE}
+
+# Get population data
+pop <- readr::read_csv("https://www150.statcan.gc.ca/t1/tbl1/en/dtl!downloadDbLoadingData-nonTraduit.action?pid=1710000901&latestN=5&startDate=&endDate=&csvLocale=en&selectedMembers=%5B%5B4%2C12%2C8%2C9%2C5%2C7%2C10%2C3%2C14%2C15%2C6%2C11%2C2%2C1%5D%5D") %>% 
+  mutate(DATE = parse_date(REF_DATE, format = "%Y-%m")) %>% 
+  select(date = DATE, geo = GEO, pop = VALUE) %>% 
+  group_by(geo) %>% 
+  slice_max(date)
+
+# Pull case data
+dat <- read_csv("https://health-infobase.canada.ca/src/data/covidLive/covid19.csv") %>% 
+  select(geo = prname, date, numtoday, numtotal, numactive) %>% 
+  mutate(date = parse_date(date, format = "%d-%m-%Y"),
+         geo = factor(x = geo, levels = pr)) %>% 
+  filter(geo != "Repatriated travellers",
+         numtoday >=0) %>% 
+  arrange(date)
+
+# Combine case and population data, calculate
+
+datpop.today <- 
+  dat %>% 
+  left_join(pop, by = c("geo", "date")) %>% # Add populations
+  mutate(geo = factor(x = geo, levels = pr)) %>%  # Recreate factor
+  group_by(geo) %>% 
+  arrange(pop) %>% 
+  mutate(pop = first(pop)) %>% # Ensure all dates have a population appropriate for their prov
+  arrange(geo) %>% 
+  ungroup() %>% 
+  filter(geo != "Canada") %>%
+  mutate(geo = forcats::fct_drop(geo)) %>% 
+  group_by(date) %>% 
+  mutate(pctcases = numtoday/sum(numtoday),
+         totpop = sum(pop),
+         pctcases = if_else(is.nan(pctcases), 0, pctcases)) %>%  # if no cases at all on that day replace with 0
+  ungroup() %>% 
+  mutate(diff = (pctcases - pop/totpop) * 100)
+
+```
+
+## Cases for the Largest Provinces by Population
+
+```{r big4, include=FALSE, message=FALSE, warning=FALSE}
+df <- 
+  dat %>% 
+  left_join(pop, by = c("geo", "date")) %>% # Add populations
+  mutate(geo = factor(x = geo, levels = pr)) %>%  # Recreate factor
+  group_by(geo) %>% 
+  arrange(pop) %>% 
+  mutate(pop = first(pop)) %>% # Ensure all dates have a population appropriate for their prov
+  arrange(geo) %>% 
+  ungroup() %>% 
+  filter(geo %in% c("Alberta", "British Columbia", "Ontario", "Quebec"))
+```
+
+### Past Week
+```{r pastweek, echo=FALSE}
+caseloadWeeksBack(df, 1) %>% knitr::kable()
+```
+
+### Past Month
+```{r pastmonth, echo=FALSE}
+caseloadWeeksBack(df, 4) %>% knitr::kable()
+```
+
+### Whole Pandemic 
+
+Since March 1st
+
+```{r pandemic, echo=FALSE}
+caseloadAll(df) %>% knitr::kable()
+```

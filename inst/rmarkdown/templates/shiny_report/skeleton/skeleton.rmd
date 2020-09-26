@@ -1,0 +1,85 @@
+---
+title: "Shiny Case Report"
+author: "Adrian Zetner"
+date: "`r Sys.Date()`"
+runtime: shiny
+output: html_document
+---
+
+```{r setup, include=FALSE, message = FALSE, warning=FALSE, comment=FALSE}
+
+library(dplyr)
+library(zoo)
+library(forcats)
+library(ggplot2)
+library(readr)
+library(RColorBrewer)
+library(utilitarian)
+library(lubridate)
+library(knitr)
+library(cases)
+
+dl <- grabDat()
+
+```
+
+## Cases by Provinces
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+
+checkboxGroupInput("provs", label = h3("Select Provinces"), 
+    choices = unique(dl$dat$geo),
+    selected = c("Alberta", "British Columbia", "Ontario", "Quebec"),
+    inline = TRUE)
+
+prchoices <- reactive(subset(dl$dat, geo %in% input$provs))
+
+```
+
+
+### Past Week
+```{r pastweek, echo=FALSE}
+
+renderTable(
+  caseloads(prchoices(), Sys.Date() - weeks(1))
+)
+
+
+```
+
+### Past Month
+```{r pastmonth, echo=FALSE}
+
+renderTable(
+  caseloads(prchoices(), Sys.Date() - weeks(4))
+)
+```
+
+### Whole Pandemic 
+
+Since March 1st
+
+```{r pandemic, echo=FALSE}
+renderTable(
+  caseloads(prchoices())
+)
+```
+
+### Custom Range
+
+
+```{r custom, echo=FALSE}
+
+shinyWidgets::sliderTextInput(
+  inputId    = "daterange",
+  label      = "Date Range",
+  choices    = ymd(unique(dl$dat$date)),
+  selected   = c(ymd(min(dl$dat$date)), ymd(max(dl$dat$date))),
+  grid       = TRUE,
+  width      = "100%"
+)
+
+renderTable(
+  caseloads(prchoices(), input$daterange[1], input$daterange[2])
+)
+```

@@ -1,0 +1,16 @@
+Package: cases
+Title: Case reporting functions
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Adrian",
+           family = "Zetner",
+           role = c("aut", "cre"),
+           email = "adrian.zetner@canada.ca")
+Description: Make creating reports to present on Shiny Server easier. 
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Depends: 
+    R (>= 2.10)
