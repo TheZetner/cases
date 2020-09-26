@@ -14,3 +14,17 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Depends: 
     R (>= 2.10)
+Imports: 
+    dplyr,
+    forcats,
+    ggplot2,
+    lubridate,
+    readr,
+    shiny,
+    tibble,
+    tidyr,
+    zoo,
+    cases,
+    shinyWidgets,
+    shinydashboardPlus,
+    shinydashboard

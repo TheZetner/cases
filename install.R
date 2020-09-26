@@ -1,0 +1,8 @@
+install.packages(shiny)
+install.packages(shinyWidgets)
+install.packages(shinydashboardPlus)
+install.packages(shinydashboard)
+install.packages(lubridate)
+install.packages(dplyr)
+install.packages(remotes)
+remotes::install_github("TheZetner/cases", dependencies = T)
