@@ -3,6 +3,7 @@
 export(brks)
 export(caseloads)
 export(grabDat)
+export(makebarplot)
 export(makeboxplot)
 export(makelineplot)
 export(runExample)

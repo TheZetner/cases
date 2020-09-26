@@ -173,11 +173,7 @@ server <- function(input, output, session) {
   output$clcol <- renderPlot({
     req(input$provs, cancelOutput = F)
     caseloads(dat(), input$daterange[1], input$daterange[2]) %>%
-      ggplot2::ggplot(aes(x = reorder(Province, - Cases), fill = Province)) +
-      geom_col(aes(y=Cases), show.legend = FALSE) +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 8)) +
-      labs(x = "Province",
-           y = "Cases")
+     makebarplot()
   })
 
   # Box Plot

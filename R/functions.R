@@ -120,8 +120,26 @@ makelineplot <- function(x, k = 7){
          #subtitle = paste("Rolling ", k, "-Day Average from ", start, " to ", end, sep = ""))
 }
 
-
 #' Bar Plots
+#'
+#' Create barplots
+#'
+#' @param x dl$dat
+#' @return dope plot
+#'
+#' @import dplyr ggplot2
+#'
+#' @export
+
+makebarplot <- function(x){
+  ggplot2::ggplot(x, aes(x = reorder(Province, - Cases), fill = Province)) +
+  geom_col(aes(y=Cases), show.legend = FALSE) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 8)) +
+  labs(x = "Province",
+       y = "Cases")
+}
+
+#' Box Plots
 #'
 #' Create barplots
 #'
