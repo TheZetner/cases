@@ -1,0 +1,194 @@
+library(shiny)
+library(cases)
+library(shinyWidgets)
+library(shinydashboardPlus)
+library(shinydashboard)
+library(lubridate)
+library(dplyr)
+
+
+# Get data
+dl <- grabDat()
+
+# Wrap shinymaterial apps in material_page
+ui <- dashboardPagePlus(
+      dashboardHeaderPlus(disable = TRUE),
+      dashboardSidebar(disable = TRUE, collapsed = TRUE),
+      dashboardBody(
+        fluidRow(
+          boxPlus(
+            width = 12,
+            column(
+              width = 12,
+              align = "center",
+              h1("Canadian Covid Cases"))),
+          boxPlus(
+            width = 12,
+            title = "Select Provinces",
+            closable = FALSE,
+            status = "info",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            "Data sourced from:",
+            br(),
+            "https://www.canada.ca/en/public-health/services/diseases/2019-novel-coronavirus-infection.html",
+            br(),
+            selectInput("provs",
+                        label = h3("Select Provinces"),
+                        choices = unique(dl$calc$geo),
+                        selected = c("Alberta", "British Columbia", "Ontario", "Quebec"),
+                        selectize = TRUE,
+                        multiple = TRUE,
+                        width = "100%"),
+            fluidRow(
+              column(
+                width = 12,
+                align = "center",
+                actionButton("all", label = "All"),
+                actionButton("bigfour", label = "Big Four"),
+                actionButton("none", label = "None")
+              )
+            )
+          ),
+          boxPlus(
+            width = 12,
+            title = "Date Range",
+            closable = FALSE,
+            status = "info",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            shinyWidgets::sliderTextInput(
+              inputId    = "daterange",
+              label      = h3("Date Range"),
+              choices    = c(ymd(unique(dl$dat$date)), Sys.Date()),
+              selected   = c(ymd(min(dl$dat$date)), ymd(max(dl$dat$date))),
+              grid       = TRUE,
+              width      = "100%"),
+            actionButton("pastweek", label = "Past Week"),
+            actionButton("pastmonth", label = "Past Month"),
+            actionButton("fullpandemic", label = "All")
+          ),
+          boxPlus(
+            width = 12,
+            title = "Caseloads",
+            closable = FALSE,
+            status = "warning",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            column(
+              width = 6,
+              tableOutput("table")
+              ),
+            column(
+              width = 6,
+              plotOutput("clcol")
+            )
+          ),
+          boxPlus(
+            width = 12,
+            title = "Deviation from Expected",
+            closable = FALSE,
+            status = "warning",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            plotOutput(outputId = "box")
+          ),
+          boxPlus(
+            width = 12,
+            title = "7-Day Rolling Average: Deviation from Expected",
+            closable = FALSE,
+            status = "warning",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            collapsed = TRUE,
+            plotOutput(outputId = "line")
+          ),
+
+  )
+)
+)
+
+server <- function(input, output, session) {
+
+
+  calc <-  reactive({
+    dl$calc %>%
+      filter(geo %in% input$provs) %>%
+      filter(between(date, as.Date(input$daterange[1]),as.Date(input$daterange[2])))
+  })
+  dat <-  reactive({
+    dl$dat %>%
+      filter(geo %in% input$provs) %>%
+      filter(between(date, as.Date(input$daterange[1]),as.Date(input$daterange[2])))
+  })
+
+  # Province Buttons
+  # All
+  observeEvent(input$all, {
+    updateSelectInput(session, "provs",
+                      selected = unique(dl$calc$geo)
+    )
+  })
+  # Big 4
+  observeEvent(input$bigfour, {
+    updateSelectInput(session, "provs",
+                      selected = c("Alberta", "British Columbia", "Ontario", "Quebec")
+    )
+  })
+  # None
+  observeEvent(input$none, {
+    updateSelectInput(session, "provs",
+                      selected = ""
+    )
+  })
+
+  # Date Buttons
+  # Week
+  observeEvent(input$pastweek, {
+    updateSliderTextInput(session, "daterange",
+                      selected = c(Sys.Date() - weeks(1), Sys.Date())
+    )
+  })
+  # Week
+  observeEvent(input$pastmonth, {
+    updateSliderTextInput(session, "daterange",
+                          selected = c(Sys.Date() - weeks(4), Sys.Date())
+    )
+  })
+  # Full Pandemic
+  observeEvent(input$fullpandemic, {
+    updateSliderTextInput(session, "daterange",
+                          selected = c(ymd("2020-01-01"), Sys.Date())
+    )
+  })
+
+
+  # Caseload Table
+  output$table <- renderTable({
+    req(input$provs, cancelOutput = F)
+    caseloads(dat(), input$daterange[1], input$daterange[2])
+    })
+
+  # Caseload Plot
+  output$clcol <- renderPlot({
+    req(input$provs, cancelOutput = F)
+    caseloads(dat(), input$daterange[1], input$daterange[2]) %>%
+     makebarplot()
+  })
+
+  # Box Plot
+  output$box <- renderPlot({
+    req(input$provs, cancelOutput = F)
+    makeboxplot(calc())
+  })
+
+  # Rolling Average Plot
+  output$line <- renderPlot({
+    req(input$provs, cancelOutput = F)
+    makelineplot(calc())
+  })
+
+}
+
+
+shinyApp(ui = ui, server = server)
