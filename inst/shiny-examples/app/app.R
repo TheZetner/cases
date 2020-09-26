@@ -60,7 +60,7 @@ ui <- dashboardPagePlus(
             shinyWidgets::sliderTextInput(
               inputId    = "daterange",
               label      = h3("Date Range"),
-              choices    = ymd(unique(dl$dat$date)),
+              choices    = c(ymd(unique(dl$dat$date)), Sys.Date()),
               selected   = c(ymd(min(dl$dat$date)), ymd(max(dl$dat$date))),
               grid       = TRUE,
               width      = "100%"),
