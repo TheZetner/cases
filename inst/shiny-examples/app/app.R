@@ -5,6 +5,7 @@ library(shinydashboardPlus)
 library(shinydashboard)
 library(lubridate)
 library(dplyr)
+library(ggplot2)
 
 
 # Get data
@@ -64,11 +65,16 @@ ui <- dashboardPagePlus(
               selected   = c(ymd(min(dl$dat$date)), ymd(max(dl$dat$date))),
               grid       = TRUE,
               width      = "100%"),
-            actionButton("pastweek", label = "Past Week"),
-            actionButton("pastmonth", label = "Past Month"),
-            actionButton("fullpandemic", label = "All")
+            fluidRow(
+              column(
+                width = 12,
+                align = "center",
+                actionButton("pastweek", label = "Past Week"),
+                actionButton("pastmonth", label = "Past Month"),
+                actionButton("fullpandemic", label = "All")))
           ),
           boxPlus(
+            id = "caseloads",
             width = 12,
             title = "Caseloads",
             closable = FALSE,
@@ -85,6 +91,7 @@ ui <- dashboardPagePlus(
             )
           ),
           boxPlus(
+            id = "deviation",
             width = 12,
             title = "Deviation from Expected",
             closable = FALSE,
@@ -94,6 +101,23 @@ ui <- dashboardPagePlus(
             plotOutput(outputId = "box")
           ),
           boxPlus(
+            id = "daily",
+            width = 12,
+            title = "Daily Cases for All Selected Provinces",
+            closable = FALSE,
+            status = "warning",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            plotOutput(outputId = "numtoday"),
+            fluidRow(
+              column(
+                width = 12,
+                align = "center",
+                switchInput("sumtoday", size = "mini", value = FALSE, onLabel = "Colour by province", offLabel = "Summarise All")
+              ))
+          ),
+          boxPlus(
+            id = "roll",
             width = 12,
             title = "7-Day Rolling Average: Deviation from Expected",
             closable = FALSE,
@@ -180,6 +204,29 @@ server <- function(input, output, session) {
   output$box <- renderPlot({
     req(input$provs, cancelOutput = F)
     makeboxplot(calc())
+  })
+
+  # Box Plot
+  output$numtoday <- renderPlot({
+    req(input$provs, cancelOutput = F)
+    p <- ggplot(calc(), aes(x = date, y = numtoday))
+
+    if(input$sumtoday){
+      p <- p + geom_col(aes(fill = geo))
+    } else {
+      p <- p + geom_col()
+    }
+
+    p +
+      theme(legend.title = element_blank(),
+            legend.position='bottom') +
+      guides(fill=guide_legend(ncol=2)) +
+      labs(x = "Date",
+           y = "Number of Cases") +
+      scale_x_date(date_breaks = "1 week",
+                   date_minor_breaks = "3 days",
+                   date_labels = "%b-%d") +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10))
   })
 
   # Rolling Average Plot
