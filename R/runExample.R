@@ -4,7 +4,7 @@
 #'
 #' @export
 runExample <- function() {
-  appDir <- system.file("shiny-examples", "app", package = "cases")
+  appDir <- system.file("app", package = "cases")
   if (appDir == "") {
     stop("Could not find example directory. Try re-installing `cases`.", call. = FALSE)
   }
