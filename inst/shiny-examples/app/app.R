@@ -59,13 +59,30 @@ ui <- dashboardPagePlus(
             status = "info",
             solidHeader = TRUE,
             collapsible = TRUE,
-            shinyWidgets::sliderTextInput(
-              inputId    = "daterange",
-              label      = h3("Date Range"),
-              choices    = c(ymd(unique(dl$dat$date)), Sys.Date()),
-              selected   = c(ymd(min(dl$dat$date)), ymd(max(dl$dat$date))),
-              grid       = TRUE,
-              width      = "100%"),
+            column(
+              width = 12,
+              align = "center",
+              plotOutput(width = "100%",
+                         outputId = "numtoday",
+                         brush = brushOpts(id = "plot_brush", fill = "#FFF", stroke = "#000",
+                                             opacity = 0.2, delay = 300, delayType = "debounce",
+                                             clip = TRUE, direction = "x", resetOnNew = FALSE)),
+              br(),
+              fluidRow(
+                column(
+                  width = 12,
+                  align = "center",
+                   switchInput("sumtoday", size = "mini", value = FALSE, onLabel = "Colour by province", offLabel = "Summarise All"),
+                   )),
+              shinyWidgets::sliderTextInput(
+                inputId    = "daterange",
+                label      = NULL,
+                choices    = seq(ymd("2020-01-31"), Sys.Date(), by = "1 day"),
+                selected   = c(ymd("2020-01-31"), Sys.Date()),
+                grid       = TRUE,
+                force_edges = T,
+                width      = "95%")
+              ),
             fluidRow(
               column(
                 width = 12,
@@ -73,6 +90,7 @@ ui <- dashboardPagePlus(
                 actionButton("pastweek", label = "Past Week"),
                 actionButton("pastmonth", label = "Past Month"),
                 actionButton("fullpandemic", label = "All")))
+
           ),
           boxPlus(
             id = "caseloads",
@@ -101,26 +119,26 @@ ui <- dashboardPagePlus(
             collapsible = TRUE,
             plotOutput(outputId = "box")
           ),
-          boxPlus(
-            id = "daily",
-            width = 12,
-            title = "Daily Cases for All Selected Provinces",
-            closable = FALSE,
-            status = "warning",
-            solidHeader = TRUE,
-            collapsible = TRUE,
-            plotOutput(outputId = "numtoday",
-                       brush = brushOpts(id = "plot_brush", fill = "#FFF", stroke = "#000",
-                                         opacity = 0.2, delay = 300, delayType = "debounce",
-                                         clip = TRUE, direction = "x", resetOnNew = FALSE)),
-            br(),
-            fluidRow(
-              column(
-                width = 12,
-                align = "center",
-                switchInput("sumtoday", size = "mini", value = FALSE, onLabel = "Colour by province", offLabel = "Summarise All")
-              ))
-          ),
+          # boxPlus(
+          #   id = "daily",
+          #   width = 12,
+          #   title = "Daily Cases for All Selected Provinces",
+          #   closable = FALSE,
+          #   status = "warning",
+          #   solidHeader = TRUE,
+          #   collapsible = TRUE,
+          #   plotOutput(outputId = "numtoday",
+          #              brush = brushOpts(id = "plot_brush", fill = "#FFF", stroke = "#000",
+          #                                opacity = 0.2, delay = 300, delayType = "debounce",
+          #                                clip = TRUE, direction = "x", resetOnNew = FALSE)),
+          #   br(),
+          #   fluidRow(
+          #     column(
+          #       width = 12,
+          #       align = "center",
+          #       switchInput("sumtoday", size = "mini", value = FALSE, onLabel = "Colour by province", offLabel = "Summarise All")
+          #     ))
+          # ),
           boxPlus(
             id = "roll",
             width = 12,
@@ -139,19 +157,18 @@ ui <- dashboardPagePlus(
 )
 
 server <- function(input, output, session) {
-
-
+  # Reactive Data ####
   calc <-  reactive({
     dl$calc %>%
       filter(geo %in% input$provs) %>%
       filter(between(date, as.Date(input$daterange[1]),as.Date(input$daterange[2])))
-  })
+  }) # Calculate diff from expected and subset by date/geo
   dat <-  reactive({
     dl$dat %>%
       filter(geo %in% input$provs)
-  })
+  }) # Subset by geo
 
-  # Province Buttons
+  # Province Buttons ####
   # All
   observeEvent(input$all, {
     updateSelectInput(session, "provs",
@@ -171,7 +188,7 @@ server <- function(input, output, session) {
     )
   })
 
-  # Date Buttons
+  # Date Buttons ####
   # Week
   observeEvent(input$pastweek, {
     updateSliderTextInput(session, "daterange",
@@ -207,7 +224,7 @@ server <- function(input, output, session) {
 
   }, ignoreNULL = FALSE) # Must monitor for change to NULL in plot_brush
 
-  # Caseload Table
+  # Caseload Table ####
   output$table <- renderDT(options = list(
     searching = FALSE,
     lengthChange = FALSE,
@@ -218,23 +235,23 @@ server <- function(input, output, session) {
     caseloads(dat(), input$daterange[1], input$daterange[2])
     })
 
-  # Caseload Plot
+  # Caseload Plot ####
   output$clcol <- renderPlot({
     req(input$provs, cancelOutput = F)
     caseloads(dat(), input$daterange[1], input$daterange[2]) %>%
      makebarplot()
   })
 
-  # Box Plot
+  # Box Plot ####
   output$box <- renderPlot({
     req(input$provs, cancelOutput = F)
     makeboxplot(calc())
   })
 
-  # Cases Plot
+  # Cases Plot ####
   output$numtoday <- renderPlot({
     req(input$provs, cancelOutput = F)
-      p <- ggplot(dat(), aes(x = date, y = numtoday))
+    p <- ggplot(dat(), aes(x = date, y = numtoday))
 
     if(input$sumtoday){
       p <- p + geom_col(aes(fill = geo))
@@ -259,14 +276,19 @@ server <- function(input, output, session) {
             legend.position='bottom') +
       guides(fill=guide_legend(ncol=2)) +
       labs(x = "Date",
-           y = "Number of Cases") +
-      scale_x_date(date_breaks = "1 week",
-                   date_minor_breaks = "3 days",
+           title = "Daily Canadian Covid-19",
+           y = NULL) +
+           #y = "Number of Cases") +
+      scale_x_date(expand = c(0,0),
+                   limits = c(ymd("2020-01-31"), Sys.Date()),
+                   date_breaks = "1 week",
+                   date_minor_breaks = "1 days",
                    date_labels = "%b-%d") +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10))
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 10),
+            axis.text.y = element_text(angle = 90, vjust = 0.5, size = 10))
   })
 
-  # Rolling Average Plot
+  # Rolling Average Plot ####
   output$line <- renderPlot({
     req(input$provs, cancelOutput = F)
     makelineplot(calc())
