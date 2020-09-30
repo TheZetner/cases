@@ -5,6 +5,7 @@ library(shinydashboardPlus)
 library(shinydashboard)
 library(lubridate)
 library(dplyr)
+library(DT)
 library(ggplot2)
 
 
@@ -83,7 +84,7 @@ ui <- dashboardPagePlus(
             collapsible = TRUE,
             column(
               width = 6,
-              tableOutput("table")
+              DTOutput("table")
               ),
             column(
               width = 6,
@@ -188,7 +189,12 @@ server <- function(input, output, session) {
 
 
   # Caseload Table
-  output$table <- renderTable({
+  output$table <- renderDT(options = list(
+    searching = FALSE,
+    lengthChange = FALSE,
+    info = FALSE,
+    paging = FALSE
+  ), {
     req(input$provs, cancelOutput = F)
     caseloads(dat(), input$daterange[1], input$daterange[2])
     })

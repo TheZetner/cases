@@ -58,7 +58,7 @@ grabDat <- function(){
 #' @param start first day - defaults to March 1st, 2020
 #' @param end last day - defaults to today
 #'
-#' @return List of two tibbles: References (RNAME/LENGTH) and Mapping (ID/PN/VN/CL)
+#' @return Tibble: Prvinces, Cases, Percent of Selected Total (rounded to 3)
 #'
 #' @import dplyr tibble tidyr
 #'
@@ -70,7 +70,7 @@ caseloads <- function(x, start = "2020-03-01", end = Sys.Date()){
                    as.Date(ymd(end)))) %>% # Select period
     mutate(Tot = sum(numtoday)) %>% # total cases for all
     group_by(geo) %>%
-    mutate(PctTotal = sum(numtoday)/Tot * 100,
+    mutate(PctTotal = round(sum(numtoday)/Tot * 100, 3),
            Cases = sum(numtoday)) %>% # Percent of cases in that period (sums to 1)
     slice_head(n = 1) %>%
     select(Province = geo, Cases, PctTotal)

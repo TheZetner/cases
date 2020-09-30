@@ -26,4 +26,5 @@ Imports:
     zoo,
     shinyWidgets,
     shinydashboardPlus,
-    shinydashboard
+    shinydashboard,
+    DT

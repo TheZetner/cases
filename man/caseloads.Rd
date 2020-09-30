@@ -14,7 +14,7 @@ caseloads(x, start = "2020-03-01", end = Sys.Date())
 \item{end}{last day - defaults to today}
 }
 \value{
-List of two tibbles: References (RNAME/LENGTH) and Mapping (ID/PN/VN/CL)
+Tibble: Prvinces, Cases, Percent of Selected Total (rounded to 3)
 }
 \description{
 Relative Caseloads by Date
