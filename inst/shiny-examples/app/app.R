@@ -109,7 +109,11 @@ ui <- dashboardPagePlus(
             status = "warning",
             solidHeader = TRUE,
             collapsible = TRUE,
-            plotOutput(outputId = "numtoday"),
+            plotOutput(outputId = "numtoday",
+                       brush = brushOpts(id = "plot_brush", fill = "#FFF", stroke = "#000",
+                                         opacity = 0.2, delay = 300, delayType = "debounce",
+                                         clip = TRUE, direction = "x", resetOnNew = FALSE)),
+            br(),
             fluidRow(
               column(
                 width = 12,
@@ -129,6 +133,7 @@ ui <- dashboardPagePlus(
             plotOutput(outputId = "line")
           ),
 
+
   )
 )
 )
@@ -143,8 +148,7 @@ server <- function(input, output, session) {
   })
   dat <-  reactive({
     dl$dat %>%
-      filter(geo %in% input$provs) %>%
-      filter(between(date, as.Date(input$daterange[1]),as.Date(input$daterange[2])))
+      filter(geo %in% input$provs)
   })
 
   # Province Buttons
@@ -183,10 +187,25 @@ server <- function(input, output, session) {
   # Full Pandemic
   observeEvent(input$fullpandemic, {
     updateSliderTextInput(session, "daterange",
-                          selected = c(ymd("2020-01-01"), Sys.Date())
+                          selected = c(ymd("2020-01-31"), Sys.Date())
     )
   })
 
+  observeEvent(input$plot_brush, {
+    bp <- brushedPoints(dat(), input$plot_brush)
+    if(is.null(input$plot_brush)){
+      updateSliderTextInput(session,
+                            "daterange",
+                            selected = c(ymd("2020-01-31"),
+                                         Sys.Date()))
+    } else {
+      updateSliderTextInput(session,
+                            "daterange",
+                            selected = c(min(bp$date),
+                                         max(bp$date)))
+    }
+
+  }, ignoreNULL = FALSE) # Must monitor for change to NULL in plot_brush
 
   # Caseload Table
   output$table <- renderDT(options = list(
@@ -212,10 +231,10 @@ server <- function(input, output, session) {
     makeboxplot(calc())
   })
 
-  # Box Plot
+  # Cases Plot
   output$numtoday <- renderPlot({
     req(input$provs, cancelOutput = F)
-    p <- ggplot(calc(), aes(x = date, y = numtoday))
+      p <- ggplot(dat(), aes(x = date, y = numtoday))
 
     if(input$sumtoday){
       p <- p + geom_col(aes(fill = geo))
@@ -224,6 +243,18 @@ server <- function(input, output, session) {
     }
 
     p +
+      annotate("rect",
+               xmin = as.Date("2020-01-31"),
+               xmax = as.Date(input$daterange[1]),
+               ymin = -Inf,
+               ymax = Inf,
+               alpha = .2) +
+      annotate("rect",
+               xmin = as.Date(input$daterange[2]),
+               xmax = Sys.Date(),
+               ymin = -Inf,
+               ymax = Inf,
+               alpha = .2) +
       theme(legend.title = element_blank(),
             legend.position='bottom') +
       guides(fill=guide_legend(ncol=2)) +
@@ -239,6 +270,11 @@ server <- function(input, output, session) {
   output$line <- renderPlot({
     req(input$provs, cancelOutput = F)
     makelineplot(calc())
+  })
+
+  output$brush_info <- renderPrint({
+    cat("input$plot_brush:\n")
+    str(input$plot_brush)
   })
 
 }
