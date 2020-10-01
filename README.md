@@ -13,7 +13,7 @@ Launch App using Master branch: [![Binder](https://mybinder.org/badge_logo.svg)]
 
 ### Select Provinces
 
-![](/images/selprov.png)
+![] (/images/selprov.png)
 
 * Type in search bar. Enter or clicking on province name adds to selection
 * _Big Four_ refers to BC, ON, AB, and QC as the largest provinces by population 
@@ -23,7 +23,7 @@ Launch App using Master branch: [![Binder](https://mybinder.org/badge_logo.svg)]
 
 Click and drag on the plot, move the sliders, or click the buttons to choose what range to select from Jan 31st, 2020 to Today.
 
-![](/images/seldate1.png)
+![] (/images/seldate1.png)
 
 Use the toggle switch to show aggregate cases or colour by province. 
 
