@@ -12,6 +12,5 @@
 # install.packages("shinydashboard")
 # install.packages("lubridate")
 # install.packages("dplyr")
-install.packages("dichromat")
 install.packages("remotes")
 remotes::install_github("TheZetner/cases")

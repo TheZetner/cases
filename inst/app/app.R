@@ -64,15 +64,15 @@ ui <- dashboardPagePlus(
               align = "center",
               plotOutput(width = "100%",
                          outputId = "numtoday",
-                         brush = brushOpts(id = "plot_brush", fill = "#FFF", stroke = "#000",
-                                             opacity = 0.2, delay = 300, delayType = "debounce",
+                         brush = brushOpts(id = "plot_brush", fill = "#FFF", stroke = "#FFF",
+                                             opacity = 0, delay = 300, delayType = "debounce",
                                              clip = TRUE, direction = "x", resetOnNew = FALSE)),
               br(),
               fluidRow(
                 column(
                   width = 12,
                   align = "center",
-                   switchInput("sumtoday", size = "mini", value = FALSE, onLabel = "Colour by province", offLabel = "Summarise All"),
+                   switchInput("sumtoday", size = "mini", value = FALSE, onLabel = "Provinces Coloured", offLabel = "Provinces Summarised"),
                    )),
               shinyWidgets::sliderTextInput(
                 inputId    = "daterange",
@@ -147,7 +147,6 @@ ui <- dashboardPagePlus(
             status = "warning",
             solidHeader = TRUE,
             collapsible = TRUE,
-            collapsed = TRUE,
             plotOutput(outputId = "line")
           ),
 
@@ -274,7 +273,7 @@ server <- function(input, output, session) {
                alpha = .2) +
       theme(legend.title = element_blank(),
             legend.position='bottom') +
-      guides(fill=guide_legend(ncol=2)) +
+      guides(fill=guide_legend(ncol=ceiling(nlevels(dat()$geo)/2))) +
       labs(x = "Date",
            title = "Daily Canadian Covid-19",
            y = NULL) +
