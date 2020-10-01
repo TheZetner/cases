@@ -37,17 +37,17 @@ All are relative to the provinces selected and the date range chosen. To compare
     * Table of cases and percent share of cases from the selected provinces. Click column headers to reorder.
     * Chart displays same information as table
   
-![](./images/caseloads.png)
+    ![](./images/caseloads.png)
   
 2. Deviation from Expected: Summary
     * Summary of daily deviations from expected caseload (see below) across date range specified
 
-![](./images/summary.png)
+    ![](./images/summary.png)
 
 3. Deviation from Expected: Rolling Average
     * 7-Day rolling average of deviation from expected caseload (see below) across date range specified
 
-![](./images/rolling.png)
+    ![](./images/rolling.png)
 
 ### Calculations
 
