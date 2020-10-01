@@ -13,7 +13,7 @@ Launch App using Master branch: [![Binder](https://mybinder.org/badge_logo.svg)]
 
 ### Select Provinces
 
-![selprov](/images/selprov.png)
+![selprov](/images/selprov.PNG)
 
 * Type in search bar. Enter or clicking on province name adds to selection
 * _Big Four_ refers to BC, ON, AB, and QC as the largest provinces by population 
@@ -23,11 +23,11 @@ Launch App using Master branch: [![Binder](https://mybinder.org/badge_logo.svg)]
 
 Click and drag on the plot, move the sliders, or click the buttons to choose what range to select from Jan 31st, 2020 to Today.
 
-![seldate1](/images/seldate1.png)
+![seldate1](/images/seldate1.PNG)
 
 Use the toggle switch to show aggregate cases or colour by province. 
 
-![seldate2](/images/seldate2.png)
+![seldate2](/images/seldate2.PNG)
 
 ### Data Display
 
@@ -37,17 +37,17 @@ All are relative to the provinces selected and the date range chosen. To compare
     * Table of cases and percent share of cases from the selected provinces. Click column headers to reorder.
     * Chart displays same information as table
   
-    ![caseloads](/images/caseloads.png)
+    ![caseloads](/images/caseloads.PNG)
   
 2. Deviation from Expected: Summary
     * Summary of daily deviations from expected caseload (see below) across date range specified
 
-    ![summary](/images/summary.png)
+    ![summary](/images/summary.PNG)
 
 3. Deviation from Expected: Rolling Average
     * 7-Day rolling average of deviation from expected caseload (see below) across date range specified
 
-    ![rolling](/images/rolling.png)
+    ![rolling](/images/rolling.PNG)
 
 ### Calculations
 
