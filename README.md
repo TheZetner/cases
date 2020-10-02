@@ -5,7 +5,7 @@ Comparison of caseloads between Canadian provinces.
 
 Data sourced from: https://www.canada.ca/en/public-health/services/diseases/2019-novel-coronavirus-infection.html
 
-## Lauch Webapp via Binder
+## Launch Webapp via Binder
 
 Launch App using Master branch: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/TheZetner/cases/master?urlpath=shiny/inst/app/)
 
