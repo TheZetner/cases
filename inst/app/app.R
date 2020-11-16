@@ -87,6 +87,8 @@ ui <- dashboardPagePlus(
               column(
                 width = 12,
                 align = "center",
+                # actionButton("day1", label = "Day"),
+                airDatepickerInput("day1", placeholder = "Date(s)", range = TRUE, maxDate = Sys.Date() + 1, todayButton = TRUE, width = "20%", autoClose = TRUE),
                 actionButton("pastweek", label = "Past Week"),
                 actionButton("pastmonth", label = "Past Month"),
                 actionButton("fullpandemic", label = "All")))
@@ -188,13 +190,22 @@ server <- function(input, output, session) {
   })
 
   # Date Buttons ####
+  # Day
+  observeEvent(input$day1, {
+    updateSliderTextInput(session, "daterange",
+                           selected = c(input$day1, input$day1)
+    )
+  })
+
+
   # Week
   observeEvent(input$pastweek, {
     updateSliderTextInput(session, "daterange",
                       selected = c(Sys.Date() - weeks(1), Sys.Date())
     )
   })
-  # Week
+
+  # Month
   observeEvent(input$pastmonth, {
     updateSliderTextInput(session, "daterange",
                           selected = c(Sys.Date() - weeks(4), Sys.Date())
@@ -290,7 +301,11 @@ server <- function(input, output, session) {
   # Rolling Average Plot ####
   output$line <- renderPlot({
     req(input$provs, cancelOutput = F)
-    makelineplot(calc())
+    if(input$daterange[1] == input$daterange[2]){
+      ggplot() + theme_void() + ggtitle("No rolling average for single day")
+    } else {
+      makelineplot(calc())
+    }
   })
 
   output$brush_info <- renderPrint({
