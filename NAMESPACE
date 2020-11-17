@@ -2,6 +2,7 @@
 
 export(brks)
 export(caseloads)
+export(equiv)
 export(grabDat)
 export(makebarplot)
 export(makeboxplot)

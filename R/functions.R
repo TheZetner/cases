@@ -160,3 +160,35 @@ makeboxplot <- function(x){
          colour = "Province",
          title = "Summary of Deviation from Expected Covid-19 Cases in Canadian Provinces")
 }
+
+
+#' Equivalent Counts
+#'
+#' Sometimes it's useful to know what the direct daily count's equivalent would be in other provinces based on population
+#' Recommended to filter to a smaller date set that is more useful than the overall cases
+#'
+#' @param x dl$calc
+#' @return table of what that number (as a percentage of the population) would look like in other provinces
+#'
+#' @import dplyr tibble tidyr ggplot2 lubridate
+#'
+#' @export
+
+equiv <- function(x, province, pops){
+  x %>%
+    filter(geo == province) %>%
+    summarise(Count = sum(numtoday),
+              pop = first(pop)) %>%
+    ungroup() %>%
+    full_join(select(pops, -date)) %>%
+    filter(geo != "Canada") %>%
+    arrange(Count) %>%
+    mutate(Count = case_when(
+      !is.na(Count) ~ Count,
+      TRUE ~ floor(.$Count[1] * pop/.$pop[1])
+    )) %>%
+    select(Province = geo, Count, -pop) %>%
+    mutate(Province = ordered(Province, levels = unlist(provs, use.names = F))) %>%
+    arrange(Province)
+
+}

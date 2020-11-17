@@ -87,8 +87,7 @@ ui <- dashboardPagePlus(
               column(
                 width = 12,
                 align = "center",
-                # actionButton("day1", label = "Day"),
-                airDatepickerInput("day1", placeholder = "Date(s)", range = TRUE, maxDate = Sys.Date() + 1, todayButton = TRUE, width = "20%", autoClose = TRUE),
+                airDatepickerInput("dates", placeholder = "Date(s)", range = TRUE, maxDate = Sys.Date() + 1, todayButton = TRUE, width = "20%", autoClose = TRUE),
                 actionButton("pastweek", label = "Past Week"),
                 actionButton("pastmonth", label = "Past Month"),
                 actionButton("fullpandemic", label = "All")))
@@ -121,26 +120,6 @@ ui <- dashboardPagePlus(
             collapsible = TRUE,
             plotOutput(outputId = "box")
           ),
-          # boxPlus(
-          #   id = "daily",
-          #   width = 12,
-          #   title = "Daily Cases for All Selected Provinces",
-          #   closable = FALSE,
-          #   status = "warning",
-          #   solidHeader = TRUE,
-          #   collapsible = TRUE,
-          #   plotOutput(outputId = "numtoday",
-          #              brush = brushOpts(id = "plot_brush", fill = "#FFF", stroke = "#000",
-          #                                opacity = 0.2, delay = 300, delayType = "debounce",
-          #                                clip = TRUE, direction = "x", resetOnNew = FALSE)),
-          #   br(),
-          #   fluidRow(
-          #     column(
-          #       width = 12,
-          #       align = "center",
-          #       switchInput("sumtoday", size = "mini", value = FALSE, onLabel = "Colour by province", offLabel = "Summarise All")
-          #     ))
-          # ),
           boxPlus(
             id = "roll",
             width = 12,
@@ -151,8 +130,17 @@ ui <- dashboardPagePlus(
             collapsible = TRUE,
             plotOutput(outputId = "line")
           ),
-
-
+          boxPlus(
+            id = "equiv",
+            width = 12,
+            title = "Relative Daily Cases for Timeframe",
+            closable = FALSE,
+            status = "warning",
+            solidHeader = TRUE,
+            collapsible = TRUE,
+            uiOutput("chooseequivprov"),
+            DTOutput("equivtable")
+          ),
   )
 )
 )
@@ -163,10 +151,12 @@ server <- function(input, output, session) {
     dl$calc %>%
       filter(geo %in% input$provs) %>%
       filter(between(date, as.Date(input$daterange[1]),as.Date(input$daterange[2])))
+
   }) # Calculate diff from expected and subset by date/geo
   dat <-  reactive({
     dl$dat %>%
       filter(geo %in% input$provs)
+
   }) # Subset by geo
 
   # Province Buttons ####
@@ -191,41 +181,36 @@ server <- function(input, output, session) {
 
   # Date Buttons ####
   # Day
-  observeEvent(input$day1, {
+  observeEvent(input$dates, {
     updateSliderTextInput(session, "daterange",
-                           selected = c(input$day1, input$day1)
+                           selected = c(input$dates, input$dates)
     )
   })
 
-
   # Week
   observeEvent(input$pastweek, {
-    updateSliderTextInput(session, "daterange",
-                      selected = c(Sys.Date() - weeks(1), Sys.Date())
-    )
+    updateAirDateInput(session, "dates", value = c(Sys.Date() - weeks(1), Sys.Date()))
   })
 
   # Month
   observeEvent(input$pastmonth, {
-    updateSliderTextInput(session, "daterange",
-                          selected = c(Sys.Date() - weeks(4), Sys.Date())
-    )
+    updateAirDateInput(session, "dates", value = c(Sys.Date() - weeks(4), Sys.Date()))
   })
   # Full Pandemic
   observeEvent(input$fullpandemic, {
-    updateSliderTextInput(session, "daterange",
-                          selected = c(ymd("2020-01-31"), Sys.Date())
-    )
+    updateAirDateInput(session, "dates", value = c(ymd("2020-01-31"), Sys.Date()))
   })
 
   observeEvent(input$plot_brush, {
     bp <- brushedPoints(dat(), input$plot_brush)
     if(is.null(input$plot_brush)){
+      updateAirDateInput(session, "dates", value = c(ymd("2020-01-31"), Sys.Date()))
       updateSliderTextInput(session,
                             "daterange",
                             selected = c(ymd("2020-01-31"),
                                          Sys.Date()))
     } else {
+      updateAirDateInput(session, "dates", value = c(min(bp$date), max(bp$date)))
       updateSliderTextInput(session,
                             "daterange",
                             selected = c(min(bp$date),
@@ -308,10 +293,28 @@ server <- function(input, output, session) {
     }
   })
 
+  # Count Comparisons
+  output$chooseequivprov <- renderUI({
+    selectInput("equivprov", "Province", pull(calc(), 1), selected = 1)
+  })
+
+  output$equivtable <- renderDT(options = list(
+    searching = FALSE,
+    lengthChange = FALSE,
+    info = FALSE,
+    paging = FALSE
+  ), {
+    req(input$provs, cancelOutput = F)
+    equiv(calc(), input$equivprov, dl$pop)
+  })
+
   output$brush_info <- renderPrint({
     cat("input$plot_brush:\n")
     str(input$plot_brush)
   })
+
+
+
 
 }
 
