@@ -87,7 +87,7 @@ ui <- dashboardPagePlus(
               column(
                 width = 12,
                 align = "center",
-                airDatepickerInput("dates", placeholder = "Date(s)", range = TRUE, maxDate = Sys.Date() + 1, todayButton = TRUE, width = "20%", autoClose = TRUE),
+                airDatepickerInput("dates", placeholder = "Date(s)", range = TRUE, maxDate = Sys.Date(), todayButton = TRUE, width = "20%", autoClose = TRUE),
                 actionButton("pastweek", label = "Past Week"),
                 actionButton("pastmonth", label = "Past Month"),
                 actionButton("fullpandemic", label = "All")))
@@ -179,6 +179,13 @@ server <- function(input, output, session) {
     )
   })
 
+  # Update Dates when slider moves
+  observeEvent(input$daterange, {
+    updateAirDateInput(session, "dates",
+                       value = c(input$daterange[1], input$daterange[2])
+    )
+  })
+
   # Date Buttons ####
   # Day
   observeEvent(input$dates, {
@@ -201,7 +208,7 @@ server <- function(input, output, session) {
     updateAirDateInput(session, "dates", value = c(ymd("2020-01-31"), Sys.Date()))
   })
 
-  observeEvent(input$plot_brush, {
+  observeEvent(input$plot_brush,ignoreInit = TRUE, {
     bp <- brushedPoints(dat(), input$plot_brush)
     if(is.null(input$plot_brush)){
       updateAirDateInput(session, "dates", value = c(ymd("2020-01-31"), Sys.Date()))
